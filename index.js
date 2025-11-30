@@ -1,6 +1,7 @@
 // index.js
 const express = require('express');
 const cors = require('cors');
+const fetch = require('node-fetch'); // تأكد مثبت node-fetch
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -14,7 +15,7 @@ app.get('/', (req, res) => {
   res.send('Flutter API Proxy is running');
 });
 
-// البروكسي للـ GET
+// البروكسي للـ GET API
 app.get('/proxy', async (req, res) => {
   const endpoint = req.query.endpoint;
   if (!endpoint) return res.status(400).json({ error: 'Endpoint is required' });
@@ -31,7 +32,7 @@ app.get('/proxy', async (req, res) => {
   }
 });
 
-// البروكسي للـ POST
+// البروكسي للـ POST API
 app.post('/proxy', async (req, res) => {
   const { endpoint, body } = req.body;
   if (!endpoint) return res.status(400).json({ error: 'Endpoint is required in body' });
@@ -49,6 +50,23 @@ app.post('/proxy', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch the target API' });
+  }
+});
+
+// بروكسي للصور (لتجاوز مشاكل CORS)
+app.get('/proxy/image', async (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).json({ error: 'Image URL is required' });
+
+  try {
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    res.set('Content-Type', contentType);
+    res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch image' });
   }
 });
 
