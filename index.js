@@ -1,61 +1,57 @@
 // index.js
 const express = require('express');
-const fetch = require('node-fetch'); // تأكد إنك مثبت node-fetch
 const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// تمكين CORS لكل الطلبات
+// السماح بكل الطلبات من أي مصدر
 app.use(cors());
-
-// لفك JSON من body إذا هتعمل POST
 app.use(express.json());
 
-// Route أساسي للتأكد إن السيرفر شغال
+// Route للتأكد من تشغيل السيرفر
 app.get('/', (req, res) => {
   res.send('Flutter API Proxy is running');
 });
 
-// مثال على بروكسي GET لأي API خارجي
+// البروكسي للـ GET
 app.get('/proxy', async (req, res) => {
-  const targetUrl = req.query.url; // هتبعت URL في query string ?url=...
-  if (!targetUrl) {
-    return res.status(400).json({ error: 'URL is required as query parameter' });
-  }
+  const endpoint = req.query.endpoint;
+  if (!endpoint) return res.status(400).json({ error: 'Endpoint is required' });
+
+  const targetUrl = `http://manarabdelhameed-001-site1.qtempurl.com/api${endpoint}`;
 
   try {
     const response = await fetch(targetUrl);
-    const data = await response.json(); // أو response.text() حسب API
+    const data = await response.json();
     res.json(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to fetch the target URL' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch the target API' });
   }
 });
 
-// مثال POST proxy
+// البروكسي للـ POST
 app.post('/proxy', async (req, res) => {
-  const { url, body } = req.body;
-  if (!url) {
-    return res.status(400).json({ error: 'URL is required in body' });
-  }
+  const { endpoint, body } = req.body;
+  if (!endpoint) return res.status(400).json({ error: 'Endpoint is required in body' });
+
+  const targetUrl = `http://manarabdelhameed-001-site1.qtempurl.com/api${endpoint}`;
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body || {})
     });
     const data = await response.json();
     res.json(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to fetch the target URL' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch the target API' });
   }
 });
 
-// تشغيل السيرفر
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
